@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Texas Native Plant Finder</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4ef;color:#1a1a18;min-height:100vh;padding:2rem 1rem}
+.quiz-wrap{max-width:700px;margin:0 auto;background:#fff;border-radius:16px;padding:2rem;border:0.5px solid #ddddd4}
+.app-header{margin-bottom:1.75rem}
+.app-title{font-size:22px;font-weight:500;color:#1a1a18;margin-bottom:.25rem}
+.app-sub{font-size:14px;color:#666660}
+.progress-bar{height:3px;background:#e8e8e0;border-radius:2px;margin-bottom:1.75rem}
+.progress-fill{height:100%;background:#1D9E75;border-radius:2px;transition:width .35s}
+.step{display:none}.step.active{display:block}
+.step-label{font-size:11px;color:#999;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem}
+.step-title{font-size:19px;font-weight:500;margin-bottom:.25rem}
+.step-sub{font-size:14px;color:#666660;margin-bottom:1.5rem}
+.multi-hint{font-size:12px;color:#999;margin-bottom:.85rem}
+.options-grid{display:grid;gap:9px}
+.two-col{grid-template-columns:1fr 1fr}
+.opt{background:#fff;border:0.5px solid #ccccc3;border-radius:12px;padding:.8rem 1rem;cursor:pointer;transition:border-color .12s,background .12s;display:flex;align-items:center;gap:10px;color:#1a1a18}
+.opt:hover{border-color:#aaa;background:#f9f8f3}
+.opt.selected{border:1.5px solid #1D9E75;background:rgba(29,158,117,.06)}
+.opt-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:#f2f1ec}
+.opt-label{font-weight:500;font-size:14px;color:#1a1a18}
+.opt-desc{font-size:12px;color:#888882;margin-top:2px}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem}
+.btn{padding:.55rem 1.2rem;border-radius:8px;border:0.5px solid #ccc;background:transparent;color:#1a1a18;font-size:14px;cursor:pointer;font-weight:500;transition:background .12s}
+.btn:hover{background:#f2f1ec}
+.btn.primary{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.btn.primary:hover{background:#0F6E56}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.zip-input{width:100%;padding:.7rem 1rem;border:0.5px solid #ccc;border-radius:8px;font-size:15px;background:#fff;color:#1a1a18;margin-bottom:.5rem;outline:none}
+.zip-input:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.12)}
+.region-detected{font-size:13px;color:#1D9E75;display:none;margin-bottom:.5rem}
+.divider-label{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin:1.1rem 0 .75rem;padding-top:.85rem;border-top:0.5px solid #e8e8e0}
+.results{display:none}
+.results-header{margin-bottom:1.25rem}
+.results-title{font-size:19px;font-weight:500;margin-bottom:.3rem}
+.results-sub{font-size:14px;color:#666660;margin-bottom:.85rem}
+.profile-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem}
+.pill{font-size:12px;padding:4px 10px;border-radius:20px;background:rgba(29,158,117,.1);color:#0F6E56;border:0.5px solid rgba(29,158,117,.25);font-weight:500}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.plant-card{background:#fff;border:0.5px solid #ddddd4;border-radius:12px;overflow:hidden;transition:border-color .15s,transform .1s;cursor:default}
+.plant-card:hover{border-color:#bbb;transform:translateY(-1px)}
+.card-top{padding:1rem 1rem .5rem;display:flex;align-items:flex-start;gap:10px}
+.card-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background:#f2f1ec}
+.card-name{font-size:14px;font-weight:500;color:#1a1a18}
+.card-latin{font-size:11px;color:#aaa;font-style:italic;margin-top:2px}
+.card-body{padding:0 1rem 1rem}
+.card-desc{font-size:13px;color:#666660;line-height:1.55;margin-bottom:.75rem}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:11px;padding:3px 8px;border-radius:10px;font-weight:500}
+.tag.sun{background:#FAEEDA;color:#854F0B}
+.tag.water{background:#E6F1FB;color:#185FA5}
+.tag.goal{background:#EAF3DE;color:#3B6D11}
+.tag.type{background:#EEEDFE;color:#3C3489}
+.card-match{display:flex;align-items:center;gap:6px;margin-top:.75rem;padding-top:.75rem;border-top:0.5px solid #e8e8e0}
+.match-bg{flex:1;height:4px;background:#e8e8e0;border-radius:2px}
+.match-fill{height:100%;border-radius:2px;background:#1D9E75}
+.match-pct{font-size:11px;color:#1D9E75;font-weight:500;min-width:28px;text-align:right}
+.results-meta{font-size:12px;color:#aaa;margin-bottom:1rem}
+.restart{margin-top:1.25rem;text-align:center}
+.no-results{text-align:center;padding:2rem;color:#888;font-size:14px}
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="app-header">
+    <div class="app-title">🌿 Texas Native Plant Finder</div>
+    <div class="app-sub">Answer 4 quick questions to get personalized plant recommendations for your land.</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:14%"></div></div>
+
+  <div class="step active" id="step-0">
+    <div class="step-label">Step 1 of 4</div>
+    <div class="step-title">Where in Texas are you located?</div>
+    <div class="step-sub">We'll match plants native to your ecoregion and local climate.</div>
+    <input class="zip-input" id="zip" placeholder="Enter your ZIP code (e.g. 78666)" maxlength="5" oninput="detectRegion(this.value)">
+    <div class="region-detected" id="region-out"></div>
+    <div class="divider-label">Or select your region</div>
+    <div class="options-grid two-col">
+      <div class="opt" onclick="selectRegion(this,'Piney Woods')"><div class="opt-icon">🌲</div><div><div class="opt-label">Piney Woods</div><div class="opt-desc">East Texas</div></div></div>
+      <div class="opt" onclick="selectRegion(this,'Post Oak Savanna')"><div class="opt-icon">🌳</div><div><div class="opt-label">Post Oak Savanna</div><div class="opt-desc">Central-East</div></div></div>
+      <div class="opt" onclick="selectRegion(this,'Blackland Prairie')"><div class="opt-icon">🌾</div><div><div class="opt-label">Blackland Prairie</div><div class="opt-desc">Dallas–Waco–Austin</div></div></div>
+      <div class="opt" onclick="selectRegion(this,'Hill Country')"><div class="opt-icon">⛰️</div><div><div class="opt-label">Hill Country</div><div class="opt-desc">Edwards Plateau</div></div></div>
+      <div class="opt" onclick="selectRegion(this,'South Texas Plains')"><div class="opt-icon">🌵</div><div><div class="opt-label">South Texas Plains</div><div class="opt-desc">San Antonio–Laredo</div></div></div>
+      <div class="opt" onclick="selectRegion(this,'Gulf Coast')"><div class="opt-icon">🌊</div><div><div class="opt-label">Gulf Coast</div><div class="opt-desc">Houston–Corpus Christi</div></div></div>
+      <div class="opt" onclick="selectRegion(this,'Trans-Pecos')"><div class="opt-icon">🏜️</div><div><div class="opt-label">Trans-Pecos</div><div class="opt-desc">Far West Texas</div></div></div>
+      <div class="opt" onclick="selectRegion(this,'Rolling Plains')"><div class="opt-icon">🌄</div><div><div class="opt-label">Rolling Plains</div><div class="opt-desc">Abilene–Wichita Falls</div></div></div>
+    </div>
+    <div class="nav"><span></span><button class="btn primary" id="btn0" onclick="goStep(1)" disabled>Next →</button></div>
+  </div>
+
+  <div class="step" id="step-1">
+    <div class="step-label">Step 2 of 4</div>
+    <div class="step-title">How much sun does your planting area get?</div>
+    <div class="step-sub">Think about your yard or garden bed during peak summer hours.</div>
+    <div class="options-grid">
+      <div class="opt" onclick="selectOne(this,'sun','Full sun')"><div class="opt-icon">☀️</div><div><div class="opt-label">Full sun</div><div class="opt-desc">6+ hours of direct sunlight daily</div></div></div>
+      <div class="opt" onclick="selectOne(this,'sun','Part shade')"><div class="opt-icon">⛅</div><div><div class="opt-label">Partial sun / shade</div><div class="opt-desc">3–6 hours, dappled or morning sun</div></div></div>
+      <div class="opt" onclick="selectOne(this,'sun','Full shade')"><div class="opt-icon">🌫️</div><div><div class="opt-label">Full shade</div><div class="opt-desc">Under 3 hours or indirect light only</div></div></div>
+    </div>
+    <div class="nav"><button class="btn" onclick="goStep(0)">← Back</button><button class="btn primary" id="btn1" onclick="goStep(2)" disabled>Next →</button></div>
+  </div>
+
+  <div class="step" id="step-2">
+    <div class="step-label">Step 3 of 4</div>
+    <div class="step-title">What's your water situation?</div>
+    <div class="step-sub">This tells us how drought-tolerant your plants need to be.</div>
+    <div class="options-grid">
+      <div class="opt" onclick="selectOne(this,'water','High')"><div class="opt-icon">💧</div><div><div class="opt-label">Irrigation available</div><div class="opt-desc">Drip, sprinkler, or regular hand watering</div></div></div>
+      <div class="opt" onclick="selectOne(this,'water','Low')"><div class="opt-icon">🌧️</div><div><div class="opt-label">Rain-fed only</div><div class="opt-desc">No supplemental watering — rainfall only</div></div></div>
+      <div class="opt" onclick="selectOne(this,'water','Moderate')"><div class="opt-icon">🪣</div><div><div class="opt-label">Occasional watering</div><div class="opt-desc">I'll water during establishment, prefer low-water plants</div></div></div>
+    </div>
+    <div class="nav"><button class="btn" onclick="goStep(1)">← Back</button><button class="btn primary" id="btn2" onclick="goStep(3)" disabled>Next →</button></div>
+  </div>
+
+  <div class="step" id="step-3">
+    <div class="step-label">Step 4 of 4</div>
+    <div class="step-title">What are your goals?</div>
+    <div class="step-sub">Select all that apply — we'll prioritize plants that do multiple jobs.</div>
+    <div class="multi-hint">Select all that apply</div>
+    <div class="options-grid two-col">
+      <div class="opt" onclick="toggleGoal(this,'food')"><div class="opt-icon">🍎</div><div><div class="opt-label">Food production</div><div class="opt-desc">Fruits, nuts, edibles</div></div></div>
+      <div class="opt" onclick="toggleGoal(this,'wildlife')"><div class="opt-icon">🦋</div><div><div class="opt-label">Wildlife habitat</div><div class="opt-desc">Birds, pollinators, bees</div></div></div>
+      <div class="opt" onclick="toggleGoal(this,'erosion')"><div class="opt-icon">🌱</div><div><div class="opt-label">Erosion control</div><div class="opt-desc">Slopes, banks, bare soil</div></div></div>
+      <div class="opt" onclick="toggleGoal(this,'shade')"><div class="opt-icon">🌳</div><div><div class="opt-label">Shade & beauty</div><div class="opt-desc">Ornamental, canopy, curb appeal</div></div></div>
+      <div class="opt" onclick="toggleGoal(this,'windbreak')"><div class="opt-icon">🌬️</div><div><div class="opt-label">Windbreak / privacy</div><div class="opt-desc">Dense screening or shelter</div></div></div>
+      <div class="opt" onclick="toggleGoal(this,'medicinal')"><div class="opt-icon">🌿</div><div><div class="opt-label">Medicinal / aromatic</div><div class="opt-desc">Herbs, native medicine plants</div></div></div>
+    </div>
+    <div class="nav"><button class="btn" onclick="goStep(2)">← Back</button><button class="btn primary" id="btn3" onclick="getResults()" disabled>Get my plants →</button></div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="results-header">
+      <div class="results-title">Your personalized plant recommendations</div>
+      <div class="results-sub">Matched from our Texas native plant database to your exact profile.</div>
+      <div class="profile-pills" id="pills"></div>
+      <div class="results-meta" id="results-meta"></div>
+    </div>
+    <div id="cards-container" class="cards-grid"></div>
+    <div class="restart"><button class="btn" onclick="restart()">← Start over</button></div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const state = { region:'', sun:'', water:'', goals:[] };
+
+// ─── ZIP → REGION MAP ────────────────────────────────────────────────────────
+const zipMap = {
+  '750':'Blackland Prairie','751':'Blackland Prairie','752':'Blackland Prairie','753':'Blackland Prairie',
+  '754':'Blackland Prairie','755':'Post Oak Savanna','756':'Piney Woods','757':'Piney Woods',
+  '758':'Rolling Plains','759':'Post Oak Savanna','760':'Rolling Plains','761':'Rolling Plains',
+  '762':'Rolling Plains','763':'Blackland Prairie','764':'Blackland Prairie','765':'Blackland Prairie',
+  '766':'Rolling Plains','767':'Rolling Plains','768':'Rolling Plains','769':'Rolling Plains',
+  '770':'Gulf Coast','771':'Gulf Coast','772':'Gulf Coast','773':'Gulf Coast','774':'Gulf Coast',
+  '775':'Gulf Coast','776':'Gulf Coast','777':'Gulf Coast','778':'Gulf Coast','779':'South Texas Plains',
+  '780':'Blackland Prairie','781':'Blackland Prairie','782':'Blackland Prairie','783':'Hill Country',
+  '784':'Hill Country','785':'Blackland Prairie','786':'Blackland Prairie','787':'Blackland Prairie',
+  '788':'South Texas Plains','789':'South Texas Plains','790':'Rolling Plains','791':'Rolling Plains',
+  '792':'Rolling Plains','793':'Rolling Plains','794':'Rolling Plains','795':'Rolling Plains',
+  '796':'Rolling Plains','797':'Trans-Pecos','798':'Trans-Pecos','799':'Trans-Pecos'
+};
+
+// ─── PLANT DATABASE ──────────────────────────────────────────────────────────
+// Fields: name, latin, emoji, type (tree/shrub/groundcover/wildflower/vine/grass),
+//   regions[] (ecoregion keys), sun[] (Full sun / Part shade / Full shade),
+//   water[] (Low / Moderate / High), goals[] (food/wildlife/erosion/shade/windbreak/medicinal),
+//   desc: short description tailored to the plant's value
+const PLANTS = [
+  // ── TREES ──────────────────────────────────────────────────────────────────
+  {name:"Texas Persimmon",latin:"Diospyros texana",emoji:"🫐",type:"tree",
+   regions:["Hill Country","South Texas Plains","Blackland Prairie","Trans-Pecos","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["food","wildlife","shade"],
+   desc:"Small multi-trunk tree producing sweet black fruits relished by deer, birds, and humans. Extremely drought-tough and deer-resistant once established."},
+  {name:"Pecan",latin:"Carya illinoinensis",emoji:"🌰",type:"tree",
+   regions:["Blackland Prairie","Post Oak Savanna","Piney Woods","Gulf Coast","Hill Country","Rolling Plains"],
+   sun:["Full sun"],water:["Moderate","High"],goals:["food","wildlife","shade"],
+   desc:"Texas's state tree bears rich, oily nuts prized by wildlife and people alike. A long-lived canopy tree that anchors riparian corridors and homestead landscapes."},
+  {name:"Texas Ebony",latin:"Ebenopsis ebano",emoji:"🌑",type:"tree",
+   regions:["South Texas Plains","Gulf Coast"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["wildlife","shade","windbreak","food"],
+   desc:"Dense evergreen tree with fragrant white blooms and large seed pods eaten by wildlife. Outstanding windbreak and privacy screen in South Texas and the Valley."},
+  {name:"Anacua",latin:"Ehretia anacua",emoji:"🍊",type:"tree",
+   regions:["South Texas Plains","Gulf Coast","Hill Country"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["food","wildlife","shade"],
+   desc:"Evergreen to semi-evergreen tree with rough sandpaper leaves, white flowers, and small orange-yellow fruits that birds love. Excellent shade and wildlife value."},
+  {name:"Desert Willow",latin:"Chilopsis linearis",emoji:"🌸",type:"tree",
+   regions:["Trans-Pecos","Hill Country","Rolling Plains","South Texas Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","shade","erosion"],
+   desc:"Spectacular long-blooming tree with orchid-like pink and white flowers that hummingbirds flock to. Tolerates rocky caliche soils and extreme heat with little water."},
+  {name:"Texas Ash",latin:"Fraxinus texensis",emoji:"🍂",type:"tree",
+   regions:["Hill Country","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["shade","wildlife","erosion"],
+   desc:"One of Texas's most brilliant native trees for fall color — rich purples, reds, and oranges. Roots hold limestone slopes while canopy shelters songbirds."},
+  {name:"Bald Cypress",latin:"Taxodium distichum",emoji:"🌲",type:"tree",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Moderate","High"],goals:["shade","erosion","wildlife"],
+   desc:"Ancient, adaptable conifer thriving from creek banks to uplands. Feathery foliage turns copper in fall; knee-like roots stabilize streambanks and reduce erosion."},
+  {name:"Loblolly Pine",latin:"Pinus taeda",emoji:"🌲",type:"tree",
+   regions:["Piney Woods","Post Oak Savanna"],
+   sun:["Full sun"],water:["Moderate","High"],goals:["windbreak","wildlife","shade"],
+   desc:"Fast-growing native pine forming dense windbreaks and wildlife corridors across East Texas. Provides year-round shelter for songbirds and small mammals."},
+  {name:"Texas Live Oak",latin:"Quercus fusiformis",emoji:"🌳",type:"tree",
+   regions:["Hill Country","Blackland Prairie","South Texas Plains","Post Oak Savanna","Rolling Plains"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["shade","wildlife","windbreak","erosion"],
+   desc:"Iconic evergreen oak of the Texas Hill Country with massive spreading canopies. Acorns feed deer, turkey, and jays; roots bind rocky limestone soils."},
+  {name:"Shumard Oak",latin:"Quercus shumardii",emoji:"🍁",type:"tree",
+   regions:["Blackland Prairie","Post Oak Savanna","Piney Woods","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Moderate"],goals:["shade","wildlife","erosion"],
+   desc:"Magnificent fast-growing oak producing brilliant scarlet-red fall color. Large acorn crop supports deer and turkey; one of the best native oaks for urban planting."},
+  {name:"Post Oak",latin:"Quercus stellata",emoji:"🌳",type:"tree",
+   regions:["Post Oak Savanna","Piney Woods","Blackland Prairie","Rolling Plains"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["shade","wildlife","food"],
+   desc:"Sturdy, slow-growing oak named for its cross-shaped leaves. Highly drought-tolerant once established; acorns are a critical wildlife mast crop in East and Central Texas."},
+  {name:"Honey Mesquite",latin:"Prosopis glandulosa",emoji:"🌵",type:"tree",
+   regions:["Rolling Plains","South Texas Plains","Trans-Pecos","Blackland Prairie","Hill Country"],
+   sun:["Full sun"],water:["Low"],goals:["food","wildlife","shade","medicinal"],
+   desc:"Prolific nitrogen-fixer with sweet bean pods eaten by wildlife, livestock, and people. Fragrant yellow catkins attract pollinators; bark and pods used medicinally."},
+  {name:"Mexican Plum",latin:"Prunus mexicana",emoji:"🍑",type:"tree",
+   regions:["Blackland Prairie","Post Oak Savanna","Hill Country","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["food","wildlife","shade"],
+   desc:"Small native plum tree with fragrant white spring blossoms and dark purple fruit loved by birds and mammals. Excellent understory tree and early-season pollinator plant."},
+  {name:"Texas Mulberry",latin:"Morus microphylla",emoji:"🫐",type:"tree",
+   regions:["Hill Country","Trans-Pecos","South Texas Plains","Rolling Plains","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["food","wildlife"],
+   desc:"Small native mulberry producing abundant sweet-tart berries in late spring. One of the best fruit-bearing trees for wildlife in arid Central and West Texas."},
+  {name:"Possumhaw Holly",latin:"Ilex decidua",emoji:"🔴",type:"tree",
+   regions:["Piney Woods","Post Oak Savanna","Blackland Prairie","Gulf Coast","Hill Country"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","shade"],
+   desc:"Deciduous holly blazing with clusters of bright red to orange berries all winter after leaves drop. A critical food source for migrating and resident birds across Texas."},
+  {name:"Yaupon Holly",latin:"Ilex vomitoria",emoji:"🌿",type:"tree",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie"],
+   sun:["Full sun","Part shade","Full shade"],water:["Low","Moderate","High"],goals:["wildlife","windbreak","medicinal","food"],
+   desc:"North America's only caffeinated native plant — leaves make a smooth, antioxidant-rich tea. Evergreen and extremely adaptable; red berries feed over 40 bird species."},
+  {name:"Bigtooth Maple",latin:"Acer grandidentatum",emoji:"🍁",type:"tree",
+   regions:["Hill Country","Trans-Pecos"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["shade","wildlife"],
+   desc:"Texas's native maple ignites canyons with blazing orange and red fall color. Confined to Edwards Plateau canyons and Trans-Pecos mountains; outstanding ornamental."},
+  {name:"Eastern Red Cedar",latin:"Juniperus virginiana",emoji:"🌲",type:"tree",
+   regions:["Rolling Plains","Blackland Prairie","Post Oak Savanna","Piney Woods"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["windbreak","wildlife","erosion"],
+   desc:"Dense evergreen providing year-round cover for nesting birds and food for cedar waxwings and robins. A premier native windbreak tree that thrives in tough soils."},
+  {name:"Ashe Juniper",latin:"Juniperus ashei",emoji:"🌲",type:"tree",
+   regions:["Hill Country","Blackland Prairie"],
+   sun:["Full sun"],water:["Low"],goals:["windbreak","wildlife","erosion"],
+   desc:"Iconic Hill Country juniper providing nesting habitat for the endangered Golden-cheeked Warbler. Blue berries feed cedar waxwings; roots stabilize rocky terrain."},
+  {name:"Texas Sugarberry",latin:"Celtis laevigata",emoji:"🍇",type:"tree",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie","South Texas Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate","High"],goals:["food","wildlife","shade","erosion"],
+   desc:"Adaptable native hackberry producing small orange-red berries devoured by over 50 bird species. Fast-growing shade tree for difficult soils from creek bottoms to uplands."},
+  {name:"Retama",latin:"Parkinsonia aculeata",emoji:"🌼",type:"tree",
+   regions:["South Texas Plains","Gulf Coast","Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","shade","erosion"],
+   desc:"Feathery green-barked tree with cascades of yellow blooms in spring and summer. Provides critical nesting cover and insect forage in harsh South Texas brushland."},
+  {name:"Texas Madrone",latin:"Arbutus xalapensis",emoji:"🌺",type:"tree",
+   regions:["Hill Country","Trans-Pecos"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["wildlife","shade"],
+   desc:"One of Texas's most beautiful trees with peeling red bark, white urn-shaped flowers, and red berries eaten by bluebirds and other fruit-eaters in winter."},
+  {name:"Black Willow",latin:"Salix nigra",emoji:"🌿",type:"tree",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie","Rolling Plains"],
+   sun:["Full sun"],water:["Moderate","High"],goals:["erosion","wildlife","shade"],
+   desc:"Outstanding streambank stabilizer with deep, fast-spreading roots. Provides critical early-season catkin pollen for native bees; fast-growing shade tree near water."},
+  {name:"American Beautyberry",latin:"Callicarpa americana",emoji:"💜",type:"shrub",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie"],
+   sun:["Part shade","Full shade"],water:["Moderate"],goals:["wildlife","medicinal"],
+   desc:"Stunning shrub with vivid magenta-purple berry clusters that persist into winter, feeding mockingbirds and other songbirds. Leaves are a traditional insect repellent."},
+
+  // ── SHRUBS ─────────────────────────────────────────────────────────────────
+  {name:"Agarita",latin:"Berberis trifoliolata",emoji:"🔴",type:"shrub",
+   regions:["Hill Country","South Texas Plains","Trans-Pecos","Blackland Prairie","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["food","wildlife","erosion","medicinal"],
+   desc:"Spiny evergreen shrub with tart red berries used for jelly and wine. Yellow flowers are early-season bee forage; dense thorns make it impenetrable wildlife cover."},
+  {name:"Turk's Cap",latin:"Malvaviscus arboreus",emoji:"🌺",type:"shrub",
+   regions:["Gulf Coast","Piney Woods","Post Oak Savanna","South Texas Plains","Hill Country"],
+   sun:["Part shade","Full shade"],water:["Low","Moderate"],goals:["wildlife","food","medicinal"],
+   desc:"Bold shade-loving shrub with red spiral flowers that attract hummingbirds all summer. Fruit is edible with a mild watermelon flavor; one of the best understory wildlife plants."},
+  {name:"Texas Mountain Laurel",latin:"Sophora secundiflora",emoji:"💜",type:"shrub",
+   regions:["Hill Country","South Texas Plains","Trans-Pecos","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["wildlife","shade","windbreak"],
+   desc:"Stunning evergreen with cascading grape-scented purple flowers in late winter. Slow-growing but deer-resistant, long-lived, and one of the showiest native shrubs."},
+  {name:"Cenizo / Texas Sage",latin:"Leucophyllum frutescens",emoji:"🟣",type:"shrub",
+   regions:["South Texas Plains","Hill Country","Trans-Pecos","Rolling Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","windbreak","erosion"],
+   desc:"Silver-leafed shrub that erupts with purple blooms after rains — so reliable it's called the 'barometer bush.' Excellent drought-proof hedge or mass planting."},
+  {name:"Flame Acanthus",latin:"Anisacanthus quadrifidus",emoji:"🔥",type:"shrub",
+   regions:["Hill Country","Trans-Pecos","South Texas Plains","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Fiery orange-red tubular flowers from midsummer through frost that hummingbirds can't resist. Dies back in winter but regrows vigorously; perfect for hot, dry slopes."},
+  {name:"Fragrant Mimosa",latin:"Mimosa borealis",emoji:"🌸",type:"shrub",
+   regions:["Rolling Plains","Hill Country","Trans-Pecos","South Texas Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion","medicinal"],
+   desc:"Thorny sprawling shrub with fluffy pink powder-puff blooms that smell of roses. Excellent bank stabilizer and impenetrable nesting cover for ground-nesting birds."},
+  {name:"Spicebush",latin:"Lindera benzoin",emoji:"🌿",type:"shrub",
+   regions:["Piney Woods"],
+   sun:["Part shade","Full shade"],water:["Moderate","High"],goals:["wildlife","medicinal","food"],
+   desc:"Aromatic understory shrub with early yellow flowers, red berries, and spicy fragrant leaves. Host plant for spicebush swallowtail butterfly; berries eaten by thrushes."},
+  {name:"Possumhaw",latin:"Ilex decidua",emoji:"🔴",type:"shrub",
+   regions:["Piney Woods","Post Oak Savanna","Blackland Prairie","Gulf Coast"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","shade"],
+   desc:"Deciduous shrub or small tree ablaze with persistent red berries all winter. A critical bird food source for cedar waxwings, robins, and bluebirds across East and Central Texas."},
+  {name:"Mexican Buckeye",latin:"Ungnadia speciosa",emoji:"🌸",type:"shrub",
+   regions:["Hill Country","South Texas Plains","Trans-Pecos","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","shade"],
+   desc:"Multi-trunk shrub or small tree with fragrant pink blooms before leaves emerge in spring. Large papery seed pods follow; adaptable to thin limestone soils."},
+  {name:"Elbow Bush",latin:"Forestiera pubescens",emoji:"🌿",type:"shrub",
+   regions:["Hill Country","Blackland Prairie","South Texas Plains","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","erosion","windbreak"],
+   desc:"Thicket-forming native shrub producing small dark blue fruits eaten by birds. Excellent erosion-control plant for slopes and ravines; blooms very early for native bees."},
+  {name:"Buttonbush",latin:"Cephalanthus occidentalis",emoji:"⚪",type:"shrub",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["High","Moderate"],goals:["wildlife","erosion"],
+   desc:"Unique spherical white flowers are magnets for butterflies and bees. Thrives in wet areas where other plants fail; roots bind stream banks and pond edges."},
+  {name:"Roughleaf Dogwood",latin:"Cornus drummondii",emoji:"⬜",type:"shrub",
+   regions:["Blackland Prairie","Post Oak Savanna","Piney Woods","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","erosion","windbreak"],
+   desc:"Fast-spreading native shrub producing white flower clusters followed by white berries relished by over 30 bird species. Spreads by root sprouts to quickly stabilize disturbed banks."},
+  {name:"Inland Sea Oats",latin:"Chasmanthium latifolium",emoji:"🌾",type:"grass",
+   regions:["Piney Woods","Post Oak Savanna","Blackland Prairie","Hill Country","Gulf Coast"],
+   sun:["Part shade","Full shade"],water:["Low","Moderate"],goals:["erosion","wildlife"],
+   desc:"Graceful native grass thriving in shade where little else grows. Dangling oat-like seed heads feed birds all winter; spreads to form dense erosion-controlling colonies."},
+  {name:"Evergreen Sumac",latin:"Rhus virens",emoji:"🔴",type:"shrub",
+   regions:["Hill Country","South Texas Plains","Trans-Pecos"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["wildlife","windbreak","erosion","food"],
+   desc:"Leathery-leafed evergreen shrub with red berry clusters eaten by over 20 bird species. Excellent low-maintenance screen or windbreak on rocky limestone soils."},
+  {name:"Smooth Sumac",latin:"Rhus glabra",emoji:"🍂",type:"shrub",
+   regions:["Rolling Plains","Blackland Prairie","Post Oak Savanna","Hill Country"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["wildlife","erosion","food","medicinal"],
+   desc:"Brilliant scarlet fall foliage and persistent red seed clusters eaten by deer and birds all winter. Spreads by rhizomes to quickly colonize and stabilize eroded slopes."},
+  {name:"Carolina Buckthorn",latin:"Frangula caroliniana",emoji:"🌿",type:"shrub",
+   regions:["Piney Woods","Post Oak Savanna","Blackland Prairie","Gulf Coast"],
+   sun:["Part shade","Full shade"],water:["Moderate"],goals:["wildlife","shade"],
+   desc:"Understory shrub or small tree with glossy leaves and berries that ripen from red to black, attracting birds. One of the few native shrubs tolerating dense shade."},
+  {name:"Kidneywood",latin:"Eysenhardtia texana",emoji:"🌼",type:"shrub",
+   regions:["Hill Country","South Texas Plains","Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","medicinal"],
+   desc:"Dense shrub with tiny white fragrant flowers that draw huge numbers of native bees and butterflies. Traditional medicinal plant; extremely drought-hardy on limestone."},
+  {name:"Wolfberry",latin:"Lycium berlandieri",emoji:"🔴",type:"shrub",
+   regions:["Trans-Pecos","South Texas Plains","Rolling Plains","Hill Country"],
+   sun:["Full sun"],water:["Low"],goals:["food","wildlife","erosion"],
+   desc:"Thorny native cousin of the commercial goji berry producing nutrient-rich red fruits. Dense thickets provide excellent nesting cover for Chihuahuan desert birds."},
+  {name:"Sandpaper Oak",latin:"Quercus pungens",emoji:"🌿",type:"shrub",
+   regions:["Trans-Pecos","Hill Country"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion","windbreak"],
+   desc:"Compact scrubby oak forming dense wildlife thickets on dry limestone and igneous slopes. Small acorns feed scaled quail, javelina, and deer in West Texas."},
+  {name:"Coralbean",latin:"Erythrina herbacea",emoji:"🔴",type:"shrub",
+   regions:["Gulf Coast","South Texas Plains","Piney Woods"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife"],
+   desc:"Spectacular scarlet-tubular flower spikes in spring that attract hummingbirds and orioles. Dies back to roots in hard freezes but regrows vigorously each spring."},
+  {name:"Dwarf Palmetto",latin:"Sabal minor",emoji:"🌴",type:"shrub",
+   regions:["Piney Woods","Gulf Coast"],
+   sun:["Part shade","Full shade"],water:["Moderate","High"],goals:["wildlife","erosion","shade"],
+   desc:"Trunkless native palm forming bold architectural clumps in wet woodland shade. Black berries eaten by birds; fan leaves provide cover for small wildlife."},
+  {name:"Wax Myrtle",latin:"Morella cerifera",emoji:"🌿",type:"shrub",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate","High"],goals:["wildlife","windbreak","medicinal"],
+   desc:"Fast-growing evergreen shrub or tree with aromatic waxy berries that yellow-rumped warblers depend on in winter. Excellent hedge, screen, or coastal windbreak plant."},
+
+  // ── WILDFLOWERS & GROUNDCOVERS ─────────────────────────────────────────────
+  {name:"Texas Bluebonnet",latin:"Lupinus texensis",emoji:"💙",type:"wildflower",
+   regions:["Hill Country","Blackland Prairie","South Texas Plains","Rolling Plains","Post Oak Savanna"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Texas's beloved state flower carpets roadsides in vivid blue from March to May. Nitrogen-fixing annual that improves soil; critical early-season nectar source for bees."},
+  {name:"Indian Blanket",latin:"Gaillardia pulchella",emoji:"🌻",type:"wildflower",
+   regions:["Blackland Prairie","Rolling Plains","South Texas Plains","Gulf Coast","Hill Country","Post Oak Savanna","Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Fiery red-and-yellow blooms from spring to frost on almost any dry, disturbed soil. One of Texas's most reliable and showy native wildflowers for pollinators."},
+  {name:"Maximilian Sunflower",latin:"Helianthus maximiliani",emoji:"🌻",type:"wildflower",
+   regions:["Blackland Prairie","Rolling Plains","Post Oak Savanna","Piney Woods","Hill Country"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["wildlife","erosion","food"],
+   desc:"Towering native sunflower reaching 10 feet in late summer, covered in golden blooms. Seeds are a critical fall food for migrating songbirds; spreads to stabilize open areas."},
+  {name:"Purple Coneflower",latin:"Echinacea purpurea",emoji:"💜",type:"wildflower",
+   regions:["Blackland Prairie","Post Oak Savanna","Piney Woods","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","medicinal"],
+   desc:"Classic prairie wildflower with rosy-purple petals and spiny orange-brown centers. Beloved by goldfinches that cling to seed heads; one of the best medicinal native plants."},
+  {name:"Black-eyed Susan",latin:"Rudbeckia hirta",emoji:"🌼",type:"wildflower",
+   regions:["Piney Woods","Post Oak Savanna","Blackland Prairie","Gulf Coast","Hill Country","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","erosion"],
+   desc:"Bright golden-yellow blooms with dark brown centers from spring through fall. Thrives on disturbed soils and slopes, making it excellent for erosion control and pollinator support."},
+  {name:"Mealy Blue Sage",latin:"Salvia farinacea",emoji:"💙",type:"wildflower",
+   regions:["Hill Country","Blackland Prairie","South Texas Plains","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["wildlife","medicinal"],
+   desc:"Slender spikes of blue-violet blooms nearly year-round in mild winters. Exceptional hummingbird and butterfly plant; drought-hardy and long-blooming in Central Texas."},
+  {name:"Winecup",latin:"Callirhoe involucrata",emoji:"🍷",type:"wildflower",
+   regions:["Hill Country","Blackland Prairie","Rolling Plains","South Texas Plains","Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["erosion","wildlife"],
+   desc:"Ground-hugging plant with vivid magenta chalice-shaped flowers from spring through summer. Deep taproot makes it extremely drought-tolerant; excellent slope and bank cover."},
+  {name:"Texas Lantana",latin:"Lantana urticoides",emoji:"🌈",type:"wildflower",
+   regions:["Gulf Coast","South Texas Plains","Hill Country","Blackland Prairie"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Native lantana (not the invasive variety) smothered in orange-yellow blooms beloved by butterflies. Shrubbly and heat-tolerant; produces black berries eaten by birds."},
+  {name:"Turk's Cap Mallow",latin:"Malvaviscus drummondii",emoji:"🌺",type:"wildflower",
+   regions:["Gulf Coast","South Texas Plains","Post Oak Savanna"],
+   sun:["Part shade","Full shade"],water:["Low","Moderate"],goals:["wildlife","food"],
+   desc:"Shade-adapted spreading plant with red spiral-petaled flowers feeding hummingbirds summer to frost. Edible fruits taste faintly of watermelon; spreads under canopy trees."},
+  {name:"Antelope Horns Milkweed",latin:"Asclepias asperula",emoji:"🦋",type:"wildflower",
+   regions:["Hill Country","Blackland Prairie","Rolling Plains","South Texas Plains","Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","medicinal"],
+   desc:"Critical native host plant for monarch butterflies, providing both nectar and larval food. Clusters of greenish-white flowers on low mounds on dry, rocky, or sandy soils."},
+  {name:"Gregg's Mistflower",latin:"Conoclinium greggii",emoji:"💙",type:"wildflower",
+   regions:["Hill Country","Trans-Pecos","South Texas Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife"],
+   desc:"Low sprawling plant smothered in fuzzy lavender-blue flowers in fall that attract huge numbers of migrating and resident butterflies, especially queens and monarchs."},
+  {name:"Salvia coccinea",latin:"Salvia coccinea",emoji:"🔴",type:"wildflower",
+   regions:["Gulf Coast","Piney Woods","Post Oak Savanna","South Texas Plains"],
+   sun:["Part shade","Full shade"],water:["Low","Moderate"],goals:["wildlife","medicinal"],
+   desc:"Self-seeding annual salvia with brilliant red flower spikes that draw hummingbirds and swallowtail butterflies. Thrives in partial shade where many natives struggle."},
+  {name:"Prairie Verbena",latin:"Glandularia bipinnatifida",emoji:"💜",type:"wildflower",
+   regions:["Hill Country","Blackland Prairie","Rolling Plains","South Texas Plains","Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Low mat-forming wildflower covered in clusters of pink-purple blooms nearly year-round. Excellent groundcover for hot, dry slopes; attracts skippers and hairstreak butterflies."},
+  {name:"White Prickly Poppy",latin:"Argemone albiflora",emoji:"⬜",type:"wildflower",
+   regions:["Blackland Prairie","Rolling Plains","Gulf Coast","South Texas Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","medicinal"],
+   desc:"Dramatic silvery-blue thistle-like plant with large papery white blooms. Self-seeds freely on disturbed soils; seeds eaten by doves and traditional plant in herbal medicine."},
+  {name:"Rain Lily",latin:"Zephyranthes chlorosolen",emoji:"🌼",type:"wildflower",
+   regions:["Hill Country","Blackland Prairie","South Texas Plains","Gulf Coast"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife"],
+   desc:"Charming bulb that blooms within days of rains, producing white or pink lily flowers en masse. Naturalizes in lawns and meadows; loved by native bees and small butterflies."},
+  {name:"Engelmann Daisy",latin:"Engelmannia peristenia",emoji:"🌼",type:"wildflower",
+   regions:["Hill Country","Blackland Prairie","Rolling Plains","South Texas Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","food"],
+   desc:"Cheerful yellow daisy blooming spring through fall on roadsides and open meadows. Seeds feed songbirds; deep taproot survives drought; easy to establish from seed."},
+  {name:"Standing Cypress",latin:"Ipomopsis rubra",emoji:"🔴",type:"wildflower",
+   regions:["Post Oak Savanna","Piney Woods","Blackland Prairie","Gulf Coast"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["wildlife"],
+   desc:"Tall, dramatic biennial with feathery foliage and spires of scarlet tubular flowers in summer — a hummingbird magnet. Self-seeds prolifically in sandy soils."},
+  {name:"Obedient Plant",latin:"Physostegia virginiana",emoji:"🌸",type:"wildflower",
+   regions:["Piney Woods","Post Oak Savanna","Blackland Prairie","Gulf Coast"],
+   sun:["Full sun","Part shade"],water:["Moderate","High"],goals:["wildlife","erosion"],
+   desc:"Showy spikes of pink-lavender flowers in late summer above moist areas. Spreads vigorously by rhizomes to colonize wet meadows and stream banks."},
+  {name:"Pink Evening Primrose",latin:"Oenothera speciosa",emoji:"🌸",type:"wildflower",
+   regions:["Blackland Prairie","Gulf Coast","South Texas Plains","Hill Country","Rolling Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Delicate pink blooms opening in morning light and carpeting disturbed areas and roadsides. Spreads by underground runners to form dense erosion-controlling mats."},
+  {name:"Texas Bluebells",latin:"Eustoma exaltatum",emoji:"💜",type:"wildflower",
+   regions:["Rolling Plains","South Texas Plains","Gulf Coast","Blackland Prairie"],
+   sun:["Full sun"],water:["Low","Moderate"],goals:["wildlife"],
+   desc:"Stunning violet-purple trumpet flowers blooming summer through fall in low-lying or disturbed areas. One of Texas's most beautiful wildflowers; popular with native bumblebees."},
+
+  // ── GRASSES ────────────────────────────────────────────────────────────────
+  {name:"Little Bluestem",latin:"Schizachyrium scoparium",emoji:"🌾",type:"grass",
+   regions:["Rolling Plains","Blackland Prairie","Post Oak Savanna","Hill Country","Piney Woods","Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Prairie icon turning brilliant bronze-red in fall with fluffy white seed heads persisting through winter. Hosts skipper butterfly larvae and provides nesting material for birds."},
+  {name:"Gulf Muhly",latin:"Muhlenbergia capillaris",emoji:"🌸",type:"grass",
+   regions:["Gulf Coast","Post Oak Savanna","Piney Woods","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife","erosion"],
+   desc:"Spectacular native grass erupting in clouds of rosy-pink flower heads in fall. Outstanding ornamental and erosion-control plant for slopes and coastal areas."},
+  {name:"Sideoats Grama",latin:"Bouteloua curtipendula",emoji:"🌾",type:"grass",
+   regions:["Hill Country","Rolling Plains","Blackland Prairie","Trans-Pecos","South Texas Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion"],
+   desc:"Texas's state grass with distinctive dangling oat-like seed heads along one side of the stem. Outstanding drought-tolerant turf alternative and erosion-control grass."},
+  {name:"Buffalo Grass",latin:"Bouteloua dactyloides",emoji:"🌿",type:"grass",
+   regions:["Rolling Plains","Blackland Prairie","Trans-Pecos","South Texas Plains"],
+   sun:["Full sun"],water:["Low"],goals:["erosion","wildlife"],
+   desc:"Short native turf grass requiring almost no supplemental water once established. Forms a dense sod lawn alternative for full-sun areas; loved by horned lizards."},
+  {name:"Eastern Gamagrass",latin:"Tripsacum dactyloides",emoji:"🌾",type:"grass",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Moderate","High"],goals:["erosion","wildlife","food"],
+   desc:"Tall, robust native grass relative of corn with edible grain used by indigenous peoples. Deep rhizomes bind streambanks; provides tall grass cover for nesting birds."},
+  {name:"Texas Wintergrass",latin:"Nassella leucotricha",emoji:"🌾",type:"grass",
+   regions:["Hill Country","Blackland Prairie","South Texas Plains","Rolling Plains"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["erosion","wildlife"],
+   desc:"Cool-season bunchgrass growing in fall and winter when other grasses are dormant. Provides important erosion control during bare winter months on Hill Country slopes."},
+
+  // ── VINES ──────────────────────────────────────────────────────────────────
+  {name:"Mustang Grape",latin:"Vitis mustangensis",emoji:"🍇",type:"vine",
+   regions:["Blackland Prairie","Post Oak Savanna","Piney Woods","Hill Country","Gulf Coast","South Texas Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["food","wildlife","erosion"],
+   desc:"Vigorous native grape producing tart purple fruit used for jelly, wine, and juice. Attracts numerous bird species; scrambles over banks and fences to bind soil."},
+  {name:"Coral Honeysuckle",latin:"Lonicera sempervirens",emoji:"🔴",type:"vine",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife"],
+   desc:"Evergreen to semi-evergreen vine with non-invasive habit and brilliant red tubular flowers beloved by hummingbirds. Unlike Japanese honeysuckle, this native behaves well."},
+  {name:"Bracted Passionflower",latin:"Passiflora affinis",emoji:"🌺",type:"vine",
+   regions:["Hill Country","South Texas Plains","Trans-Pecos"],
+   sun:["Full sun","Part shade"],water:["Low"],goals:["food","wildlife"],
+   desc:"Native passionflower with intricate white and purple blooms and edible yellow fruit. Essential host plant for Gulf Fritillary and Zebra Longwing butterfly larvae."},
+  {name:"Maypop Passionflower",latin:"Passiflora incarnata",emoji:"🌺",type:"vine",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["food","wildlife","medicinal"],
+   desc:"Spectacular purple flower with edible yellow fruit tasting like tropical guava. Host plant for multiple native butterfly species; traditional sedative in Appalachian folk medicine."},
+  {name:"Texas Wisteria",latin:"Wisteria frutescens",emoji:"💜",type:"vine",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast"],
+   sun:["Full sun","Part shade"],water:["Moderate"],goals:["wildlife","shade"],
+   desc:"Native wisteria (non-invasive unlike Asian species) with fragrant violet flower clusters in spring. Excellent for pergolas and arbors; attracts native bees and long-tongued pollinators."},
+  {name:"Trumpet Vine",latin:"Campsis radicans",emoji:"🧡",type:"vine",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie","Hill Country"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["wildlife"],
+   desc:"Robust native vine with large orange trumpet flowers from summer to fall — a hummingbird favorite. Spreads vigorously; best used on fences, walls, or trellises where spreading is controlled."},
+  {name:"Dewberry",latin:"Rubus trivialis",emoji:"🫐",type:"vine",
+   regions:["Piney Woods","Post Oak Savanna","Gulf Coast","Blackland Prairie","South Texas Plains"],
+   sun:["Full sun","Part shade"],water:["Low","Moderate"],goals:["food","wildlife","erosion"],
+   desc:"Native trailing bramble producing sweet black berries in spring. Spreads to form dense wildlife thickets that protect nesting birds; berries eaten fresh or used for pies and jam."},
+
+  // ── CACTI & SUCCULENTS ─────────────────────────────────────────────────────
+  {name:"Prickly Pear Cactus",latin:"Opuntia engelmannii",emoji:"🌵",type:"shrub",
+   regions:["Hill Country","Trans-Pecos","South Texas Plains","Rolling Plains","Blackland Prairie","Gulf Coast"],
+   sun:["Full sun"],water:["Low"],goals:["food","wildlife","erosion","medicinal"],
+   desc:"Iconic Texas cactus producing edible pads (nopales) and sweet magenta tunas (fruits). Flowers feed native bees; provides critical den sites for lizards and birds."},
+  {name:"Sotol",latin:"Dasylirion texanum",emoji:"🌿",type:"shrub",
+   regions:["Trans-Pecos","Hill Country","South Texas Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","erosion","food","medicinal"],
+   desc:"Dramatic rosette plant sending up a 15-foot flower stalk with thousands of small blooms. Historically used for food, fiber, and as a fermented beverage; excellent architectural specimen."},
+  {name:"Texas Yucca",latin:"Yucca texana",emoji:"🌵",type:"shrub",
+   regions:["Trans-Pecos","South Texas Plains","Rolling Plains"],
+   sun:["Full sun"],water:["Low"],goals:["wildlife","food","erosion","medicinal"],
+   desc:"Dramatic rosette of stiff leaves topped by tall white flower stalks. Flowers and fruit are edible; essential symbiotic relationship with the yucca moth; fibers used historically."},
+  {name:"Lechuguilla",latin:"Agave lechuguilla",emoji:"🌵",type:"shrub",
+   regions:["Trans-Pecos"],
+   sun:["Full sun"],water:["Low"],goals:["erosion","wildlife","medicinal"],
+   desc:"Hardy agave of the Chihuahuan Desert with rigid spine-tipped leaves forming dense erosion-controlling colonies. Historically one of the most important plants for indigenous peoples of West Texas."},
+
+  // ── FERNS & SHADE SPECIALISTS ──────────────────────────────────────────────
+  {name:"Southern Maidenhair Fern",latin:"Adiantum capillus-veneris",emoji:"🌿",type:"groundcover",
+   regions:["Hill Country","Trans-Pecos","Piney Woods","Gulf Coast"],
+   sun:["Part shade","Full shade"],water:["Moderate","High"],goals:["erosion","shade"],
+   desc:"Delicate lacy fronds on black wiry stems thriving in shaded, moist canyons and near seeps. One of the most elegant native groundcovers for shaded limestone or moist spots."},
+  {name:"Wood Fern",latin:"Dryopteris ludoviciana",emoji:"🌿",type:"groundcover",
+   regions:["Piney Woods","Gulf Coast"],
+   sun:["Part shade","Full shade"],water:["Moderate","High"],goals:["erosion","shade"],
+   desc:"Bold, evergreen fern forming clumps in moist, shaded East Texas woodlands. Excellent groundcover under canopy trees where little else will grow; provides wildlife cover."},
+  {name:"Cedar Sedge",latin:"Carex planostachys",emoji:"🌿",type:"groundcover",
+   regions:["Hill Country","Blackland Prairie"],
+   sun:["Part shade","Full shade"],water:["Low","Moderate"],goals:["erosion","shade"],
+   desc:"Fine-textured evergreen sedge forming a tidy groundcover mat under Hill Country oaks and cedars. One of very few natives tolerating the dense dry shade of Ashe juniper."},
+  {name:"Ebony Spleenwort",latin:"Asplenium platyneuron",emoji:"🌿",type:"groundcover",
+   regions:["Piney Woods","Post Oak Savanna","Hill Country"],
+   sun:["Part shade","Full shade"],water:["Low","Moderate"],goals:["erosion","shade"],
+   desc:"Small, tidy fern with dark wiry stems persisting year-round in rocky, shaded slopes. Thrives in limestone crevices and woodland edges where moisture collects."}
+];
+
+// ─── SCORING ENGINE ──────────────────────────────────────────────────────────
+function scorePlant(plant, s) {
+  let score = 0;
+  const regionMatch = plant.regions.includes(s.region);
+  if (!regionMatch) return null; // strict region filter
+
+  // Sun match
+  if (plant.sun.includes(s.sun)) score += 30;
+  else if (s.sun === 'Full sun' && plant.sun.includes('Part shade')) score += 15;
+  else if (s.sun === 'Full shade' && plant.sun.includes('Part shade')) score += 15;
+  else score += 5; // partial credit
+
+  // Water match
+  const wMap = { 'Low': 0, 'Moderate': 1, 'High': 2 };
+  const userW = wMap[s.water];
+  const plantW = plant.water.map(w => wMap[w]);
+  if (plantW.includes(userW)) score += 25;
+  else if (Math.min(...plantW) <= userW) score += 12; // plant can handle less water than available
+  else score += 3;
+
+  // Goal overlap
+  const overlap = s.goals.filter(g => plant.goals.includes(g)).length;
+  score += overlap * 12;
+
+  // Diversity bonus: prefer varied types
+  score += Math.random() * 6; // small random jitter for variety
+
+  // Normalize to 70–98
+  const raw = Math.min(score, 90);
+  const pct = Math.round(70 + (raw / 90) * 28);
+  return { ...plant, matchScore: pct };
+}
+
+function getRecommendations(s) {
+  const scored = PLANTS
+    .map(p => scorePlant(p, s))
+    .filter(Boolean)
+    .sort((a, b) => b.matchScore - a.matchScore);
+
+  // Ensure type diversity — pick best of each type first, then fill
+  const types = ['tree','shrub','wildflower','grass','vine','groundcover'];
+  const picked = [];
+  const used = new Set();
+
+  for (const type of types) {
+    const best = scored.find(p => p.type === type && !used.has(p.name));
+    if (best) { picked.push(best); used.add(best.name); }
+    if (picked.length >= 6) break;
+  }
+  // Fill remaining slots with highest-scoring not yet picked
+  for (const p of scored) {
+    if (picked.length >= 8) break;
+    if (!used.has(p.name)) { picked.push(p); used.add(p.name); }
+  }
+  return picked.slice(0, 8);
+}
+
+// ─── UI HELPERS ──────────────────────────────────────────────────────────────
+const progs = [14, 35, 60, 82, 100];
+
+function detectRegion(zip) {
+  if (zip.length < 3) { document.getElementById('region-out').style.display='none'; return; }
+  const r = zipMap[zip.substring(0,3)];
+  const el = document.getElementById('region-out');
+  if (r) {
+    state.region = r;
+    el.textContent = 'Detected region: ' + r;
+    el.style.display = 'block';
+    document.querySelectorAll('#step-0 .opt').forEach(o => o.classList.remove('selected'));
+    document.getElementById('btn0').disabled = false;
+  } else if (zip.length >= 5) {
+    el.textContent = 'ZIP not recognized — please select your region below.';
+    el.style.display = 'block';
+  }
+}
+
+function selectRegion(el, r) {
+  document.querySelectorAll('#step-0 .opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  state.region = r;
+  document.getElementById('btn0').disabled = false;
+  document.getElementById('region-out').style.display = 'none';
+}
+
+function selectOne(el, type, val) {
+  el.closest('.options-grid').querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  state[type] = val;
+  if (type === 'sun')   document.getElementById('btn1').disabled = false;
+  if (type === 'water') document.getElementById('btn2').disabled = false;
+}
+
+function toggleGoal(el, g) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) { state.goals.push(g); }
+  else { state.goals = state.goals.filter(x => x !== g); }
+  document.getElementById('btn3').disabled = state.goals.length === 0;
+}
+
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  document.getElementById('prog').style.width = progs[n] + '%';
+}
+
+function restart() {
+  state.region = ''; state.sun = ''; state.water = ''; state.goals = [];
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('zip').value = '';
+  document.getElementById('region-out').style.display = 'none';
+  ['btn0','btn1','btn2','btn3'].forEach(b => document.getElementById(b).disabled = true);
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-0').classList.add('active');
+  document.getElementById('prog').style.width = '14%';
+}
+
+const goalLabels = {
+  food:'Food production', wildlife:'Wildlife habitat', erosion:'Erosion control',
+  shade:'Shade & beauty', windbreak:'Windbreak / privacy', medicinal:'Medicinal / aromatic'
+};
+const waterLabels = { Low:'Rain-fed only', Moderate:'Occasional watering', High:'Irrigation available' };
+
+function getResults() {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('prog').style.width = '100%';
+
+  const pills = document.getElementById('pills');
+  pills.innerHTML = '';
+  const pillData = [state.region, state.sun, waterLabels[state.water], ...state.goals.map(g => goalLabels[g])];
+  pillData.forEach(p => {
+    if (p) { const d = document.createElement('span'); d.className='pill'; d.textContent=p; pills.appendChild(d); }
+  });
+
+  const results = getRecommendations(state);
+  const meta = document.getElementById('results-meta');
+  meta.textContent = `Showing ${results.length} of ${PLANTS.filter(p=>p.regions.includes(state.region)).length} plants in our database for ${state.region}`;
+
+  const container = document.getElementById('cards-container');
+  if (!results.length) {
+    container.innerHTML = '<div class="no-results">No exact matches found. Try broadening your goals or selecting a different region.</div>';
+    return;
+  }
+  container.innerHTML = results.map(p => `
+    <div class="plant-card">
+      <div class="card-top">
+        <div class="card-icon">${p.emoji}</div>
+        <div><div class="card-name">${p.name}</div><div class="card-latin">${p.latin}</div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-desc">${p.desc}</div>
+        <div class="card-tags">
+          <span class="tag type">${p.type}</span>
+          <span class="tag sun">${p.sun.join(' / ')}</span>
+          <span class="tag water">${p.water.join(' / ')} water</span>
+          ${p.goals.slice(0,2).map(g=>'<span class="tag goal">'+goalLabels[g]+'</span>').join('')}
+        </div>
+        <div class="card-match">
+          <span style="font-size:11px;color:#aaa">Match</span>
+          <div class="match-bg"><div class="match-fill" style="width:${p.matchScore}%"></div></div>
+          <span class="match-pct">${p.matchScore}%</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
